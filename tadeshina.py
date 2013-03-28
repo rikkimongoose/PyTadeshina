@@ -3,12 +3,13 @@ import os
 import sys
 import getopt
 import ctypes
+from Tkinter import *
 
-def produce_item_info(name, full_path, size, is_hidden = False):
+def produce_item_info(file_name, full_path, size, is_hidden = False):
 	""" Create the file info item for current file
 	"""
 	return {
-		"name" : name,
+		"file_name" : file_name,
 		"full_path" : full_path,
 		"size" : size,
 		"is_hidden" : is_hidden
@@ -82,6 +83,10 @@ def get_items_size_callback(filename='', length=0, current_item=0):
 	"""
 	print 'Processing "%s" - %s of %s' % (filename, length, current_item)
 
+def create_panel(main_window, pos_x, pos_y, pos_width, pos_height, file_data_item):
+	new_button = Button(main_window, text=file_data_item["file_name"]).place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
+	file_data_item["button_item"] = new_button
+
 # Main code
 
 
@@ -115,6 +120,13 @@ if not os.path.exists(SETTINGS["path_to_load"]):
 
 SETTINGS["debug_output"] = "--output" in OPTS
 
+PANELS = []
+
 items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
 items_data_sorted = sorted(items_data, key = lambda file_info: file_info["size"], reverse = True)
+
 print items_data_sorted
+main_window = Tk()
+create_panel(main_window, 0, 0, 20, 20, items_data_sorted[0])
+
+main_window.mainloop()
