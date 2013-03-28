@@ -112,8 +112,9 @@ else:
 if not os.path.exists(SETTINGS["path_to_load"]):
 	print 'Directory "%s" is not existing.' % SETTINGS["path_to_load"]
 	sys.exit(2)
-SETTINGS["debug_output"] = "--output" in OPTS 
-if SETTINGS["debug_output"]:
-	print get_items_size(SETTINGS["path_to_load"], get_items_size_callback)
-else:
-	print get_items_size(SETTINGS["path_to_load"])
+
+SETTINGS["debug_output"] = "--output" in OPTS
+
+items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
+items_data_sorted = sorted(items_data, key = lambda file_info: file_info["size"], reverse = True)
+print items_data_sorted
