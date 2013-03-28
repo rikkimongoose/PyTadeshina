@@ -19,7 +19,7 @@ def get_items_size(path=".", callback_iteration_func = None):
 
 		'callback_iteration_func' is executed every new item checking.
 	"""
-	result = []
+	result = { "items" : [], "total_size" : 0}
 	dir_list = os.listdir(path)
 	dir_list_length = len(dir_list)
 	i = 0
@@ -40,7 +40,9 @@ def get_items_size(path=".", callback_iteration_func = None):
 		elif os.path.isdir(file_name_full):
 			file_size = get_dir_size(file_name_full)
 
-		result.append(produce_item_info(file_name, file_name_full, file_size, False))
+		result["total_size"] += file_size
+
+		result["items"].append(produce_item_info(file_name, file_name_full, file_size, False))
 
 	return result
 
@@ -84,8 +86,13 @@ def get_items_size_callback(filename='', length=0, current_item=0):
 	print 'Processing "%s" - %s of %s' % (filename, length, current_item)
 
 def create_panel(main_window, pos_x, pos_y, pos_width, pos_height, file_data_item):
+	""" Create the visual representation of a 'file_data_item'
+	"""
 	new_button = Button(main_window, text=file_data_item["file_name"]).place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
 	file_data_item["button_item"] = new_button
+def tile_with_buttons(base_width, base_height, source_items, lambda_sorting_key):
+	source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
+
 
 # Main code
 
@@ -123,10 +130,8 @@ SETTINGS["debug_output"] = "--output" in OPTS
 PANELS = []
 
 items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
-items_data_sorted = sorted(items_data, key = lambda file_info: file_info["size"], reverse = True)
 
-print items_data_sorted
+print items_data["items"]
 main_window = Tk()
-create_panel(main_window, 0, 0, 20, 20, items_data_sorted[0])
-
+tile_with_buttons(300, 300, items_data["items"], lambda file_info: file_info["size"])
 main_window.mainloop()
