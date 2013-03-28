@@ -4,17 +4,23 @@ import sys
 import getopt
 import ctypes
 
+def makeItemInfo(name, fullpath, size, isHidden = False):
+	return {
+		"name" : name,
+		"fullpath" : fullpath,
+		"size" : size,
+		"isHidden" : isHidden
+	}
 def getItemsSize(pathRoot="."):
-	result = {}
+	result = []
 	for f in os.listdir(pathRoot):
 		if os.path.islink(f):
 			continue
-		absf = os.path.abspath(f)
 		fp = os.path.join(pathRoot, f)
 		if os.path.isfile(fp):
-			result[fp] = os.stat(fp).st_size
+			result.append(makeItemInfo(f, fp, os.stat(fp).st_size, False))
 		elif os.path.isdir(fp):
-			result[fp] = getDirSize(fp)
+			result.append(makeItemInfo(f, fp, getDirSize(fp), False))
 	return result
 
 def getDirSize(path="."):
