@@ -11,11 +11,20 @@ def makeItemInfo(name, fullpath, size, isHidden = False):
 		"size" : size,
 		"isHidden" : isHidden
 	}
-def getItemsSize(pathRoot="."):
+def getItemsSize(pathRoot=".", callbackIterationFunc = None):
 	result = []
-	for f in os.listdir(pathRoot):
+	dirList = os.listdir(pathRoot)
+	dirListLength = len(dirList)
+	i = 0
+	for f in dirList:
 		if os.path.islink(f):
 			continue
+		
+		# Callback function executed every iteration
+		if callbackIterationFunc is not None:
+			i += 1
+			callbackIterationFunc(f, dirListLength, i)
+
 		fp = os.path.join(pathRoot, f)
 		if os.path.isfile(fp):
 			result.append(makeItemInfo(f, fp, os.stat(fp).st_size, False))
@@ -49,12 +58,16 @@ def getDirSize(path=".", callbackIterationFunc = None):
 	return total_size
 	
 try:
-	OPTS, ARGS = getopt.getopt(sys.argv[1:], "do:h", ["directory=", "output=", "help"])
+	OPTS, ARGS = getopt.getopt(sys.argv[1:], "doh", ["directory=", "output", "help"])
 except getopt.GetoptError as err:
 	sys.stderr.write("%s\n" % str(err))
 	sys.exit(2)
 
+def getItemsSizeCallback(filename='', length=0, current_item=0):
+	print 'Processing "%s" - %s of %s' % (filename, length, current_item)
+
 OPTS = dict(OPTS)
+SETTINGS = {}
 
 if '--help' in OPTS:
 	print """Tadeshina 0.1 alpha
@@ -70,13 +83,16 @@ if '--help' in OPTS:
 	sys.exit(0)
 
 if '--directory' in OPTS:
-	path_to_load = OPTS['--directory']
+	SETTINGS["path_to_load"] = OPTS['--directory']
 elif len(ARGS) > 0:
-	path_to_load = ARGS[0]
+	SETTINGS["path_to_load"] = ARGS[0]
 else:
-	path_to_load = "."
-if not os.path.exists(path_to_load):
-	print 'Directory "%s" is not existing.' % path_to_load
+	SETTINGS["path_to_load"] = "."
+if not os.path.exists(SETTINGS["path_to_load"]):
+	print 'Directory "%s" is not existing.' % SETTINGS["path_to_load"]
 	sys.exit(2)
-
-print getItemsSize(path_to_load)
+SETTINGS["debug_output"] = "--output" in OPTS 
+if SETTINGS["debug_output"]:
+	print getItemsSize(SETTINGS["path_to_load"], getItemsSizeCallback)
+else:
+	print getItemsSize(SETTINGS["path_to_load"])
