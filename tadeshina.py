@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import os, sys, getopt
+import os
+import sys
+import getopt
+import ctypes
 
 def getItemsSize(pathRoot="."):
 	result = {}
@@ -33,6 +36,7 @@ def getDirSize(path="."):
 			    seen[fileid] = True
 			total_size += stat.st_size
 	return total_size
+	
 try:
 	OPTS, ARGS = getopt.getopt(sys.argv[1:], "do:h", ["directory=", "output=", "help"])
 except getopt.GetoptError as err:
@@ -63,4 +67,5 @@ else:
 if not os.path.exists(path_to_load):
 	print 'Directory "%s" is not existing.' % path_to_load
 	sys.exit(2)
+
 print getItemsSize(path_to_load)
