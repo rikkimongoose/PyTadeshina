@@ -4,57 +4,71 @@ import sys
 import getopt
 import ctypes
 
-def makeItemInfo(name, fullpath, size, isHidden = False):
+def produce_item_info(name, full_path, size, is_hidden = False):
+	""" Create the file info item for current file
+	"""
 	return {
 		"name" : name,
-		"fullpath" : fullpath,
+		"full_path" : full_path,
 		"size" : size,
-		"isHidden" : isHidden
+		"is_hidden" : is_hidden
 	}
-def getItemsSize(pathRoot=".", callbackIterationFunc = None):
+def get_items_size(path=".", callback_iteration_func = None):
+	""" Get list of all of the files and directories in 'path', with their sizes and additional info.
+
+		'callback_iteration_func' is executed every new item checking.
+	"""
 	result = []
-	dirList = os.listdir(pathRoot)
-	dirListLength = len(dirList)
+	dir_list = os.listdir(path)
+	dir_list_length = len(dir_list)
 	i = 0
-	for f in dirList:
-		if os.path.islink(f):
+	for file_name in dir_list:
+		if os.path.islink(file_name):
 			continue
 		
 		# Callback function executed every iteration
-		if callbackIterationFunc is not None:
+		if callback_iteration_func is not None:
 			i += 1
-			callbackIterationFunc(f, dirListLength, i)
+			callback_iteration_func(file_name, dir_list_length, i)
 
-		fp = os.path.join(pathRoot, f)
-		if os.path.isfile(fp):
-			result.append(makeItemInfo(f, fp, os.stat(fp).st_size, False))
-		elif os.path.isdir(fp):
-			result.append(makeItemInfo(f, fp, getDirSize(fp), False))
+		file_name_full = os.path.join(path, file_name)
+		file_size = 0
+
+		if os.path.isfile(file_name_full):
+			file_size = os.stat(file_name_full).st_size
+		elif os.path.isdir(file_name_full):
+			file_size = get_dir_size(file_name_full)
+
+		result.append(produce_item_info(file_name, file_name_full, file_size, False))
+
 	return result
 
-def getDirSize(path=".", callbackIterationFunc = None):
+def get_dir_size(path=".", callback_iteration_func = None):
+	""" Get size of the directory in 'path'.
+
+		'callback_iteration_func' is executed every new subdirectory checking.
+	"""
 	total_size = 0
 	seen = {}
-	for dirpath, dirname, filenames in os.walk(path):
-		for f in filenames:
-			fp = os.path.join(dirpath, f)
+	for dir_path, dir_name, file_names in os.walk(path):
+		for file_name in file_names:
+			file_name_full = os.path.join(dir_path, file_name)
 			
 			# Callback function executed every iteration
-			if callbackIterationFunc is not None:
-				callbackIterationFunc(fp, total_size)
+			if callback_iteration_func is not None:
+				callback_iteration_func(file_name_full, total_size)
 
-			if not os.path.exists(fp):
+			if not os.path.exists(file_name_full):
 				continue
-			stat = os.stat(fp)
-			if stat.st_ino != 0:
-			    fileid = stat.st_ino
-			else:
-			    fileid = fp
-			if os.path.islink(fp) or fileid in seen:
+			file_stat = os.stat(file_name_full)
+			
+			file_id = file_stat.st_ino != 0 and (file_stat.st_ino) or file_name_full
+			
+			if os.path.islink(file_name_full) or file_id in seen:
 			    continue
 			else:
-			    seen[fileid] = True
-			total_size += stat.st_size
+			    seen[file_id] = True
+			total_size += file_stat.st_size
 	return total_size
 	
 try:
@@ -63,8 +77,13 @@ except getopt.GetoptError as err:
 	sys.stderr.write("%s\n" % str(err))
 	sys.exit(2)
 
-def getItemsSizeCallback(filename='', length=0, current_item=0):
+def get_items_size_callback(filename='', length=0, current_item=0):
+	""" Callback function to bear process of directory change
+	"""
 	print 'Processing "%s" - %s of %s' % (filename, length, current_item)
+
+# Main code
+
 
 OPTS = dict(OPTS)
 SETTINGS = {}
@@ -76,7 +95,9 @@ if '--help' in OPTS:
 
 	python tadeshina.py %directory_name% %params%
 
-	--help - displays help
+	-h, --help - show help
+
+	--o, --output - show output
 
 	[%directory_name%] - show sizes in a directory
 	"""
@@ -93,6 +114,6 @@ if not os.path.exists(SETTINGS["path_to_load"]):
 	sys.exit(2)
 SETTINGS["debug_output"] = "--output" in OPTS 
 if SETTINGS["debug_output"]:
-	print getItemsSize(SETTINGS["path_to_load"], getItemsSizeCallback)
+	print get_items_size(SETTINGS["path_to_load"], get_items_size_callback)
 else:
-	print getItemsSize(SETTINGS["path_to_load"])
+	print get_items_size(SETTINGS["path_to_load"])
