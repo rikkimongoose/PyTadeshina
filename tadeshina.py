@@ -88,8 +88,11 @@ def get_items_size_callback(filename='', length=0, current_item=0):
 def create_panel(main_window, pos_x, pos_y, pos_width, pos_height, file_data_item):
 	""" Create the visual representation of a 'file_data_item'
 	"""
-	new_button = Button(main_window, text=file_data_item["file_name"]).place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
+	new_button = Button(main_window, text=file_data_item["file_name"])
+	new_button.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
 	file_data_item["button_item"] = new_button
+	return new_button
+
 def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_sorting_key):
 	source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
 	source_items_sorted_last = len(source_items_sorted)
@@ -98,8 +101,15 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 	new_y = 0
 	old_x = 0
 	old_y = 0
+	prev_x = 0
+	prev_y = 0
+	prev_width = 0
+	prev_height = 0
+	first_width = base_width
+	first_height = base_height
 	new_width = base_width
 	new_height = base_height
+	previous_control = None
 	while i < source_items_sorted_last and lambda_sorting_key(source_items_sorted[i]) > 0:
 		source_items_sorted_item = source_items_sorted[i]
 		current_item_size = lambda_sorting_key(source_items_sorted_item)
@@ -112,9 +122,24 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 			step_size = float(base_height) * current_item_koeff
 			new_y += step_size
 			new_height -= step_size
-		create_panel(main_window, old_x, old_y, base_width, base_height, source_items_sorted_item)
+		if previous_control is not None:
+			fixed_width = prev_width
+			fixed_height = prev_height
+			if old_x < new_x:
+				print "x"
+				#previous_control.place(width = prev_width - prev_x - new_x)
+			elif old_y < new_y:
+				print "y"
+				#previous_control.place(height = prev_height - prev_x - new_x)
+
+		previous_control = create_panel(main_window, old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted_item)
+		CONTROLS.append(previous_control)
+		prev_x = old_x
+		prev_y = old_y
 		old_x = new_x
 		old_y = new_y
+		prev_width = first_width - old_x
+		prev_height = first_height - old_y
 		base_width = new_width
 		base_height = new_height
 		total_size -= current_item_size
@@ -156,8 +181,8 @@ SETTINGS["debug_output"] = "--output" in OPTS
 
 items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
 
-print items_data["items"]
+CONTROLS = []
+
 main_window = Tk()
-print "%s x %s" % (main_window.winfo_width(), main_window.winfo_height())
-tile_with_buttons(300, 300, items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
+tile_with_buttons(main_window.winfo_reqwidth(), main_window.winfo_reqheight(), items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
 main_window.mainloop()
