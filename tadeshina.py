@@ -90,8 +90,35 @@ def create_panel(main_window, pos_x, pos_y, pos_width, pos_height, file_data_ite
 	"""
 	new_button = Button(main_window, text=file_data_item["file_name"]).place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
 	file_data_item["button_item"] = new_button
-def tile_with_buttons(base_width, base_height, source_items, lambda_sorting_key):
+def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_sorting_key):
 	source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
+	source_items_sorted_last = len(source_items_sorted)
+	i = 0
+	new_x = 0
+	new_y = 0
+	old_x = 0
+	old_y = 0
+	new_width = base_width
+	new_height = base_height
+	while i < source_items_sorted_last and lambda_sorting_key(source_items_sorted[i]) > 0:
+		source_items_sorted_item = source_items_sorted[i]
+		current_item_size = lambda_sorting_key(source_items_sorted_item)
+		current_item_koeff = float(current_item_size) / float(total_size)
+		if old_x < old_y:
+			step_size = float(base_width) * current_item_koeff
+			new_x += step_size
+			new_width -= step_size
+		else:
+			step_size = float(base_height) * current_item_koeff
+			new_y += step_size
+			new_height -= step_size
+		create_panel(main_window, old_x, old_y, base_width, base_height, source_items_sorted_item)
+		old_x = new_x
+		old_y = new_y
+		base_width = new_width
+		base_height = new_height
+		total_size -= current_item_size
+		i += 1
 
 
 # Main code
@@ -122,16 +149,15 @@ elif len(ARGS) > 0:
 else:
 	SETTINGS["path_to_load"] = "."
 if not os.path.exists(SETTINGS["path_to_load"]):
-	print 'Directory "%s" is not existing.' % SETTINGS["path_to_load"]
+	sys.stderr.write('Directory "%s" is not existing.' % SETTINGS["path_to_load"])
 	sys.exit(2)
 
 SETTINGS["debug_output"] = "--output" in OPTS
-
-PANELS = []
 
 items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
 
 print items_data["items"]
 main_window = Tk()
-tile_with_buttons(300, 300, items_data["items"], lambda file_info: file_info["size"])
+print "%s x %s" % (main_window.winfo_width(), main_window.winfo_height())
+tile_with_buttons(300, 300, items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
 main_window.mainloop()
