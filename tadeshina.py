@@ -23,12 +23,17 @@ def getItemsSize(pathRoot="."):
 			result.append(makeItemInfo(f, fp, getDirSize(fp), False))
 	return result
 
-def getDirSize(path="."):
+def getDirSize(path=".", callbackIterationFunc = None):
 	total_size = 0
 	seen = {}
 	for dirpath, dirname, filenames in os.walk(path):
 		for f in filenames:
 			fp = os.path.join(dirpath, f)
+			
+			# Callback function executed every iteration
+			if callbackIterationFunc is not None:
+				callbackIterationFunc(fp, total_size)
+
 			if not os.path.exists(fp):
 				continue
 			stat = os.stat(fp)
