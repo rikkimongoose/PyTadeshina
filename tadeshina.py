@@ -85,10 +85,10 @@ def get_items_size_callback(filename='', length=0, current_item=0):
 	"""
 	print 'Processing "%s" - %s of %s' % (filename, length, current_item)
 
-def create_panel(main_window, pos_x, pos_y, pos_width, pos_height, file_data_item):
+def create_panel(pos_x, pos_y, pos_width, pos_height, file_data_item):
 	""" Create the visual representation of a 'file_data_item'
 	"""
-	new_button = Button(main_window, text=file_data_item["file_name"])
+	new_button = Button(MAIN_WINDOW, text=file_data_item["file_name"])
 	new_button.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
 	file_data_item["button_item"] = new_button
 	return new_button
@@ -131,7 +131,7 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 				previous_control.place(width = old_x - prev_x)
 			elif old_y != prev_y:
 				previous_control.place(height = old_y - prev_y)
-		previous_control = create_panel(main_window, old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted_item)
+		previous_control = create_panel(old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted_item)
 		CONTROLS.append(previous_control)
 		prev_x = old_x
 		prev_y = old_y
@@ -144,7 +144,7 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 		total_size -= current_item_size
 		i += 1
 
-	previous_control = create_panel(main_window, old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted[source_items_sorted_last])
+	previous_control = create_panel(old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted[source_items_sorted_last])
 	CONTROLS.append(previous_control)
 # Main code
 
@@ -183,6 +183,9 @@ items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] a
 
 CONTROLS = []
 
-main_window = Tk()
-tile_with_buttons(main_window.winfo_reqwidth(), main_window.winfo_reqheight(), items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
-main_window.mainloop()
+MAIN_WINDOW = Tk()
+main_window_params = {"width" : 500, "height" : 500}
+
+MAIN_WINDOW.geometry("%sx%s" % (main_window_params["width"], main_window_params["height"]))
+tile_with_buttons(main_window_params["width"], main_window_params["height"], items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
+MAIN_WINDOW.mainloop()
