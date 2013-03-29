@@ -74,28 +74,28 @@ def get_dir_size(path=".", callback_iteration_func = None):
 			total_size += file_stat.st_size
 	return total_size
 	
-try:
-	OPTS, ARGS = getopt.getopt(sys.argv[1:], "doh", ["directory=", "output", "help"])
-except getopt.GetoptError as err:
-	sys.stderr.write("%s\n" % str(err))
-	sys.exit(2)
-
 def get_items_size_callback(filename='', length=0, current_item=0):
 	""" Callback function to bear process of directory change
 	"""
 	print 'Processing "%s" - %s of %s' % (filename, length, current_item)
 
-def create_panel(main_window, pos_x, pos_y, pos_width, pos_height, file_data_item):
+def create_panel(controls, pos_x, pos_y, pos_width, pos_height, file_data_item):
 	""" Create the visual representation of a 'file_data_item'
 	"""
-	new_button = Button(main_window, text=file_data_item["file_name"])
-	new_button.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
-	file_data_item["button_item"] = new_button
-	return new_button
+	new_panel = Frame(borderwidth=3, bd=1, relief=RIDGE) #Button(MAIN_WINDOW, text=file_data_item["file_name"])
+	new_panel.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
+	controls.append(new_panel)
+	new_buttom_label = Label(new_panel, text=file_data_item["file_name"], compound = CENTER)
+	new_buttom_label.pack(fill=Y)
+	file_data_item["button_item"] = new_panel
+	file_data_item["button_item_label"] = new_buttom_label
+	return new_panel
 
-def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_sorting_key):
-	source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
-	source_items_sorted_last = len(source_items_sorted)
+def tile_with_rects(base_width, base_height, source_items, total_size, lambda_sorting_key):
+	""" Tile area with rects according to lambda_sorting_key values
+	"""
+	rects_list = []
+	source_items_sorted_last = len(source_items) - 1
 	i = 0
 	new_x = 0
 	new_y = 0
@@ -109,9 +109,9 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 	first_height = base_height
 	new_width = base_width
 	new_height = base_height
-	previous_control = None
-	while i < source_items_sorted_last and lambda_sorting_key(source_items_sorted[i]) > 0:
-		source_items_sorted_item = source_items_sorted[i]
+	previous_rect = None
+	while i < source_items_sorted_last and lambda_sorting_key(source_items[i]) > 0:
+		source_items_sorted_item = source_items[i]
 		current_item_size = lambda_sorting_key(source_items_sorted_item)
 		current_item_koeff = float(current_item_size) / float(total_size)
 		if old_x < old_y:
@@ -122,18 +122,14 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 			step_size = float(base_height) * current_item_koeff
 			new_y += step_size
 			new_height -= step_size
-		if previous_control is not None:
-			fixed_width = prev_width
-			fixed_height = prev_height
-			if old_x < new_x:
-				print "x"
-				#previous_control.place(width = prev_width - prev_x - new_x)
-			elif old_y < new_y:
-				print "y"
-				#previous_control.place(height = prev_height - prev_x - new_x)
-
-		previous_control = create_panel(main_window, old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted_item)
-		CONTROLS.append(previous_control)
+		# arrange the previous component
+		if previous_rect is not None:
+			if old_x != prev_x:
+				previous_rect["width"] = old_x - prev_x
+			elif old_y != prev_y:
+				previous_rect["height"] = old_y - prev_y
+		previous_rect = {"x" : old_x, "y" : old_y, "width" : first_width - old_x, "height" : first_height - old_y, "item" : source_items_sorted_item}
+		rects_list.append(previous_rect)
 		prev_x = old_x
 		prev_y = old_y
 		old_x = new_x
@@ -145,44 +141,65 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 		total_size -= current_item_size
 		i += 1
 
-
+	if previous_rect is not None:
+		if old_x != prev_x:
+			previous_rect["width"] = old_x - prev_x
+		elif old_y != prev_y:
+			previous_rect["height"] = old_y - prev_y
+	rects_list.append({"x" : old_x, "y" : old_y, "width" : first_width - old_x, "height" : first_height - old_y, "item" : source_items[source_items_sorted_last]})
+	return rects_list
 # Main code
 
+def main():
+	try:
+		OPTS, ARGS = getopt.getopt(sys.argv[1:], "doh", ["directory=", "output", "help"])
+	except getopt.GetoptError as err:
+		sys.stderr.write("%s\n" % str(err))
+		sys.exit(2)
+	OPTS = dict(OPTS)
+	SETTINGS = {}
 
-OPTS = dict(OPTS)
-SETTINGS = {}
+	if '--help' in OPTS:
+		print """Tadeshina 0.1 alpha
 
-if '--help' in OPTS:
-	print """Tadeshina 0.1 alpha
+		Get size of files in a directory. Usage
 
-	Get size of files in a directory. Usage
+		python tadeshina.py %directory_name% %params%
 
-	python tadeshina.py %directory_name% %params%
+		-h, --help - show help
 
-	-h, --help - show help
+		--o, --output - show output
 
-	--o, --output - show output
+		[%directory_name%] - show sizes in a directory
+		"""
+		sys.exit(0)
 
-	[%directory_name%] - show sizes in a directory
-	"""
-	sys.exit(0)
+	if '--directory' in OPTS:
+		SETTINGS["path_to_load"] = OPTS['--directory']
+	elif len(ARGS) > 0:
+		SETTINGS["path_to_load"] = ARGS[0]
+	else:
+		SETTINGS["path_to_load"] = "."
+	if not os.path.exists(SETTINGS["path_to_load"]):
+		sys.stderr.write('Directory "%s" is not existing.' % SETTINGS["path_to_load"])
+		sys.exit(2)
 
-if '--directory' in OPTS:
-	SETTINGS["path_to_load"] = OPTS['--directory']
-elif len(ARGS) > 0:
-	SETTINGS["path_to_load"] = ARGS[0]
-else:
-	SETTINGS["path_to_load"] = "."
-if not os.path.exists(SETTINGS["path_to_load"]):
-	sys.stderr.write('Directory "%s" is not existing.' % SETTINGS["path_to_load"])
-	sys.exit(2)
+	SETTINGS["debug_output"] = "--output" in OPTS
 
-SETTINGS["debug_output"] = "--output" in OPTS
+	items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
 
-items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
+	CONTROLS = []
 
-CONTROLS = []
+	MAIN_WINDOW = Tk()
+	MAIN_WINDOW_PARAMS = {"width" : 500, "height" : 500}
 
-main_window = Tk()
-tile_with_buttons(main_window.winfo_reqwidth(), main_window.winfo_reqheight(), items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
-main_window.mainloop()
+	MAIN_WINDOW.geometry("%sx%s" % (MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"]))
+	lambda_sorting_key = lambda file_info: file_info["size"]
+	source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
+	rects_list = tile_with_rects(MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"], source_items_sorted, items_data["total_size"], lambda_sorting_key)	
+	for rect in rects_list:
+		create_panel(CONTROLS, rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
+	MAIN_WINDOW.mainloop()
+
+if __name__ == "__main__":
+	main()
