@@ -144,6 +144,11 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 		total_size -= current_item_size
 		i += 1
 
+	if previous_control is not None:
+		if old_x != prev_x:
+			previous_control.place(width = old_x - prev_x)
+		elif old_y != prev_y:
+			previous_control.place(height = old_y - prev_y)
 	previous_control = create_panel(old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted[source_items_sorted_last])
 	CONTROLS.append(previous_control)
 # Main code
