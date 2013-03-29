@@ -112,6 +112,7 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 	previous_control = None
 	while i < source_items_sorted_last and lambda_sorting_key(source_items_sorted[i]) > 0:
 		source_items_sorted_item = source_items_sorted[i]
+		print source_items_sorted_item["file_name"]
 		current_item_size = lambda_sorting_key(source_items_sorted_item)
 		current_item_koeff = float(current_item_size) / float(total_size)
 		if old_x < old_y:
@@ -123,15 +124,10 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 			new_y += step_size
 			new_height -= step_size
 		if previous_control is not None:
-			fixed_width = prev_width
-			fixed_height = prev_height
-			if old_x < new_x:
-				print "x"
-				#previous_control.place(width = prev_width - prev_x - new_x)
-			elif old_y < new_y:
-				print "y"
-				#previous_control.place(height = prev_height - prev_x - new_x)
-
+			if old_x != prev_x:
+				previous_control.place(width = old_x - prev_x)
+			elif old_y != prev_y:
+				previous_control.place(height = old_y - prev_y)
 		previous_control = create_panel(main_window, old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted_item)
 		CONTROLS.append(previous_control)
 		prev_x = old_x
@@ -144,8 +140,6 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 		base_height = new_height
 		total_size -= current_item_size
 		i += 1
-
-
 # Main code
 
 
