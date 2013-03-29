@@ -90,15 +90,17 @@ def create_panel(pos_x, pos_y, pos_width, pos_height, file_data_item):
 	"""
 	new_panel = Frame(borderwidth=3, bd=1, relief=RIDGE) #Button(MAIN_WINDOW, text=file_data_item["file_name"])
 	new_panel.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
+	CONTROLS.append(new_panel)
 	new_buttom_label = Label(new_panel, text=file_data_item["file_name"], compound = CENTER)
 	new_buttom_label.pack(fill=Y)
 	file_data_item["button_item"] = new_panel
 	file_data_item["button_item_label"] = new_buttom_label
 	return new_panel
 
-def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_sorting_key):
-	""" Tile area with buttons according to base items' sizes
+def tile_with_rects(base_width, base_height, source_items, total_size, lambda_sorting_key):
+	""" Tile area with rects according to lambda_sorting_key values
 	"""
+	rects_list = []
 	source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
 	source_items_sorted_last = len(source_items_sorted) - 1
 	i = 0
@@ -114,7 +116,7 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 	first_height = base_height
 	new_width = base_width
 	new_height = base_height
-	previous_control = None
+	previous_rect = None
 	while i < source_items_sorted_last and lambda_sorting_key(source_items_sorted[i]) > 0:
 		source_items_sorted_item = source_items_sorted[i]
 		print source_items_sorted_item["file_name"]
@@ -129,13 +131,13 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 			new_y += step_size
 			new_height -= step_size
 		# arrange the previous component
-		if previous_control is not None:
+		if previous_rect is not None:
 			if old_x != prev_x:
-				previous_control.place(width = old_x - prev_x)
+				previous_rect["width"] = old_x - prev_x
 			elif old_y != prev_y:
-				previous_control.place(height = old_y - prev_y)
-		previous_control = create_panel(old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted_item)
-		CONTROLS.append(previous_control)
+				previous_rect["height"] = old_y - prev_y
+		previous_rect = {"x" : old_x, "y" : old_y, "width" : first_width - old_x, "height" : first_height - old_y, "item" : source_items_sorted_item}
+		rects_list.append(previous_rect)
 		prev_x = old_x
 		prev_y = old_y
 		old_x = new_x
@@ -147,13 +149,13 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 		total_size -= current_item_size
 		i += 1
 
-	if previous_control is not None:
+	if previous_rect is not None:
 		if old_x != prev_x:
-			previous_control.place(width = old_x - prev_x)
+			previous_rect["width"] = old_x - prev_x
 		elif old_y != prev_y:
-			previous_control.place(height = old_y - prev_y)
-	previous_control = create_panel(old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted[source_items_sorted_last])
-	CONTROLS.append(previous_control)
+			previous_rect["height"] = old_y - prev_y
+	rects_list.append({"x" : old_x, "y" : old_y, "width" : first_width - old_x, "height" : first_height - old_y, "item" : source_items_sorted[source_items_sorted_last]})
+	return rects_list
 # Main code
 
 
@@ -192,8 +194,10 @@ items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] a
 CONTROLS = []
 
 MAIN_WINDOW = Tk()
-main_window_params = {"width" : 500, "height" : 500}
+MAIN_WINDOW_PARAMS = {"width" : 500, "height" : 500}
 
-MAIN_WINDOW.geometry("%sx%s" % (main_window_params["width"], main_window_params["height"]))
-tile_with_buttons(main_window_params["width"], main_window_params["height"], items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
+MAIN_WINDOW.geometry("%sx%s" % (MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"]))
+rects_list = tile_with_rects(MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"], items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
+for rect in rects_list:
+	create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
 MAIN_WINDOW.mainloop()
