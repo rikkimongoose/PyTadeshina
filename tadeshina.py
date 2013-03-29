@@ -74,12 +74,6 @@ def get_dir_size(path=".", callback_iteration_func = None):
 			total_size += file_stat.st_size
 	return total_size
 	
-try:
-	OPTS, ARGS = getopt.getopt(sys.argv[1:], "doh", ["directory=", "output", "help"])
-except getopt.GetoptError as err:
-	sys.stderr.write("%s\n" % str(err))
-	sys.exit(2)
-
 def get_items_size_callback(filename='', length=0, current_item=0):
 	""" Callback function to bear process of directory change
 	"""
@@ -119,7 +113,6 @@ def tile_with_rects(base_width, base_height, source_items, total_size, lambda_so
 	previous_rect = None
 	while i < source_items_sorted_last and lambda_sorting_key(source_items_sorted[i]) > 0:
 		source_items_sorted_item = source_items_sorted[i]
-		print source_items_sorted_item["file_name"]
 		current_item_size = lambda_sorting_key(source_items_sorted_item)
 		current_item_koeff = float(current_item_size) / float(total_size)
 		if old_x < old_y:
@@ -158,46 +151,54 @@ def tile_with_rects(base_width, base_height, source_items, total_size, lambda_so
 	return rects_list
 # Main code
 
+def main():
+	try:
+		OPTS, ARGS = getopt.getopt(sys.argv[1:], "doh", ["directory=", "output", "help"])
+	except getopt.GetoptError as err:
+		sys.stderr.write("%s\n" % str(err))
+		sys.exit(2)
+	OPTS = dict(OPTS)
+	SETTINGS = {}
 
-OPTS = dict(OPTS)
-SETTINGS = {}
+	if '--help' in OPTS:
+		print """Tadeshina 0.1 alpha
 
-if '--help' in OPTS:
-	print """Tadeshina 0.1 alpha
+		Get size of files in a directory. Usage
 
-	Get size of files in a directory. Usage
+		python tadeshina.py %directory_name% %params%
 
-	python tadeshina.py %directory_name% %params%
+		-h, --help - show help
 
-	-h, --help - show help
+		--o, --output - show output
 
-	--o, --output - show output
+		[%directory_name%] - show sizes in a directory
+		"""
+		sys.exit(0)
 
-	[%directory_name%] - show sizes in a directory
-	"""
-	sys.exit(0)
+	if '--directory' in OPTS:
+		SETTINGS["path_to_load"] = OPTS['--directory']
+	elif len(ARGS) > 0:
+		SETTINGS["path_to_load"] = ARGS[0]
+	else:
+		SETTINGS["path_to_load"] = "."
+	if not os.path.exists(SETTINGS["path_to_load"]):
+		sys.stderr.write('Directory "%s" is not existing.' % SETTINGS["path_to_load"])
+		sys.exit(2)
 
-if '--directory' in OPTS:
-	SETTINGS["path_to_load"] = OPTS['--directory']
-elif len(ARGS) > 0:
-	SETTINGS["path_to_load"] = ARGS[0]
-else:
-	SETTINGS["path_to_load"] = "."
-if not os.path.exists(SETTINGS["path_to_load"]):
-	sys.stderr.write('Directory "%s" is not existing.' % SETTINGS["path_to_load"])
-	sys.exit(2)
+	SETTINGS["debug_output"] = "--output" in OPTS
 
-SETTINGS["debug_output"] = "--output" in OPTS
+	items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
 
-items_data = get_items_size(SETTINGS["path_to_load"], SETTINGS["debug_output"] and get_items_size_callback or None)
+	CONTROLS = []
 
-CONTROLS = []
+	MAIN_WINDOW = Tk()
+	MAIN_WINDOW_PARAMS = {"width" : 500, "height" : 500}
 
-MAIN_WINDOW = Tk()
-MAIN_WINDOW_PARAMS = {"width" : 500, "height" : 500}
+	MAIN_WINDOW.geometry("%sx%s" % (MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"]))
+	rects_list = tile_with_rects(MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"], items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
+	for rect in rects_list:
+		create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
+	MAIN_WINDOW.mainloop()
 
-MAIN_WINDOW.geometry("%sx%s" % (MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"]))
-rects_list = tile_with_rects(MAIN_WINDOW_PARAMS["width"], MAIN_WINDOW_PARAMS["height"], items_data["items"], items_data["total_size"], lambda file_info: file_info["size"])
-for rect in rects_list:
-	create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
-MAIN_WINDOW.mainloop()
+if __name__ == "__main__":
+	main()
