@@ -94,8 +94,10 @@ def create_panel(main_window, pos_x, pos_y, pos_width, pos_height, file_data_ite
 	return new_button
 
 def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_sorting_key):
+	""" Tile area with buttons according to base items' sizes
+	"""
 	source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
-	source_items_sorted_last = len(source_items_sorted)
+	source_items_sorted_last = len(source_items_sorted) - 1
 	i = 0
 	new_x = 0
 	new_y = 0
@@ -123,6 +125,7 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 			step_size = float(base_height) * current_item_koeff
 			new_y += step_size
 			new_height -= step_size
+		# arrange the previous component
 		if previous_control is not None:
 			if old_x != prev_x:
 				previous_control.place(width = old_x - prev_x)
@@ -140,6 +143,9 @@ def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_
 		base_height = new_height
 		total_size -= current_item_size
 		i += 1
+
+	previous_control = create_panel(main_window, old_x, old_y, first_width - old_x, first_height - old_y, source_items_sorted[source_items_sorted_last])
+	CONTROLS.append(previous_control)
 # Main code
 
 
