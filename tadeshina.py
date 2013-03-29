@@ -88,10 +88,13 @@ def get_items_size_callback(filename='', length=0, current_item=0):
 def create_panel(pos_x, pos_y, pos_width, pos_height, file_data_item):
 	""" Create the visual representation of a 'file_data_item'
 	"""
-	new_button = Button(MAIN_WINDOW, text=file_data_item["file_name"])
-	new_button.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
-	file_data_item["button_item"] = new_button
-	return new_button
+	new_panel = Frame(borderwidth=3, bd=1, relief=RIDGE) #Button(MAIN_WINDOW, text=file_data_item["file_name"])
+	new_panel.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
+	new_buttom_label = Label(new_panel, text=file_data_item["file_name"], compound = CENTER)
+	new_buttom_label.pack(fill=Y)
+	file_data_item["button_item"] = new_panel
+	file_data_item["button_item_label"] = new_buttom_label
+	return new_panel
 
 def tile_with_buttons(base_width, base_height, source_items, total_size, lambda_sorting_key):
 	""" Tile area with buttons according to base items' sizes
