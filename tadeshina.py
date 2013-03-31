@@ -4,7 +4,7 @@ import sys
 import getopt
 import ctypes
 from Tkinter import *
-import ext.wnddirectory
+import ext.dirwindow
 
 def produce_item_info(file_name, full_path, size, is_hidden = False):
     """ Create the file info item for current file
