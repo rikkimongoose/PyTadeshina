@@ -75,3 +75,22 @@ def get_items_size_callback(filename='', length=0, current_item=0):
     """ Callback function to bear process of directory change
     """
     print 'Processing "%s" - %s of %s' % (filename, length, current_item)
+
+def get_bytes_size_range(num):
+    range_titles = ["b", "kB", "Mb", "Gb", "Tb", "PB", "EB", "ZP", "YB"]
+    range_titles_len = len(range_titles)
+    i = 1
+    prev_value = 0
+    new_value = num
+    is_iteration = True
+    while is_iteration:
+        prev_value = new_value
+        new_value = num >> (i * 10)
+        i = i + 1
+        is_iteration = new_value > 0 and i < range_titles_len
+    i = i - 2
+    return "%.2f%s" % (float(num) / float(1 << (10 * i)), range_titles[i])
+
+
+if __name__ == "__main__":
+    print "Helper functions for file operations"
