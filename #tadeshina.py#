@@ -25,6 +25,46 @@ def get_items_size(path=".", callback_iteration_func = None):
     i = 0
     for file_name in dir_list:
         if os.path.islink(file_name):
+def produce_item_info(file_name, full_path, size, is_hidden = False):
+    """ Create the file info item for current file
+    """
+    return {
+        "file_name" : file_name,
+        "full_path" : full_path,
+        "size" : size,
+        "is_hidden" : is_hidden
+    }
+def get_items_size(path=".", callback_iteration_func = None):
+    """ Get list of all of the files and directories in 'path', with their sizes and additional info.
+
+        'callback_iteration_func' is executed every new item checking.
+    """
+    result = { "items" : [], "total_size" : 0}
+    dir_list = os.listdir(path)
+    dir_list_length = len(dir_list)
+    i = 0
+    for file_name in dir_list:
+        if os.path.islink(file_name):
+def produce_item_info(file_name, full_path, size, is_hidden = False):
+    """ Create the file info item for current file
+    """
+    return {
+        "file_name" : file_name,
+        "full_path" : full_path,
+        "size" : size,
+        "is_hidden" : is_hidden
+    }
+def get_items_size(path=".", callback_iteration_func = None):
+    """ Get list of all of the files and directories in 'path', with their sizes and additional info.
+
+        'callback_iteration_func' is executed every new item checking.
+    """
+    result = { "items" : [], "total_size" : 0}
+    dir_list = os.listdir(path)
+    dir_list_length = len(dir_list)
+    i = 0
+    for file_name in dir_list:
+        if os.path.islink(file_name):
             continue
         
         # Callback function executed every iteration
@@ -85,8 +125,8 @@ def create_panel(controls, pos_x, pos_y, pos_width, pos_height, file_data_item):
     new_panel = Frame(borderwidth=3, bd=1, relief=RIDGE) #Button(MAIN_WINDOW, text=file_data_item["file_name"])
     new_panel.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
     controls.append(new_panel)
-    new_buttom_label = Label(new_panel, text=file_data_item["file_name"])
-    new_buttom_label.pack(expand=YES, fill=BOTH)
+    new_buttom_label = Label(new_panel, text=file_data_item["file_name"], compound = CENTER)
+    new_buttom_label.pack(fill=Y)
     file_data_item["button_item"] = new_panel
     file_data_item["button_item_label"] = new_buttom_label
     return new_panel
