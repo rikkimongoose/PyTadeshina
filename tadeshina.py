@@ -86,8 +86,8 @@ def create_panel(controls, pos_x, pos_y, pos_width, pos_height, file_data_item):
     new_panel = Frame(borderwidth=3, bd=1, relief=RIDGE) #Button(MAIN_WINDOW, text=file_data_item["file_name"])
     new_panel.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
     controls.append(new_panel)
-    new_buttom_label = Label(new_panel, text=file_data_item["file_name"], compound = CENTER)
-    new_buttom_label.pack(fill=Y)
+    new_buttom_label = Label(new_panel, text=file_data_item["file_name"])
+    new_buttom_label.pack(expand=YES, fill=BOTH)
     file_data_item["button_item"] = new_panel
     file_data_item["button_item_label"] = new_buttom_label
     return new_panel
