@@ -4,6 +4,7 @@ import sys
 import getopt
 import ctypes
 from Tkinter import *
+import ext.wnddirectory
 
 def produce_item_info(file_name, full_path, size, is_hidden = False):
     """ Create the file info item for current file
@@ -90,7 +91,6 @@ def create_panel(controls, pos_x, pos_y, pos_width, pos_height, file_data_item):
     file_data_item["button_item"] = new_panel
     file_data_item["button_item_label"] = new_buttom_label
     return new_panel
-
 def tile_with_rects(base_width, base_height, source_items, total_size, lambda_sorting_key):
     """ Tile area with rects according to lambda_sorting_key values
     """
@@ -149,7 +149,6 @@ def tile_with_rects(base_width, base_height, source_items, total_size, lambda_so
     rects_list.append({"x" : old_x, "y" : old_y, "width" : first_width - old_x, "height" : first_height - old_y, "item" : source_items[source_items_sorted_last]})
     return rects_list
 # Main code
-
 def main():
     try:
         OPTS, ARGS = getopt.getopt(sys.argv[1:], "doh", ["directory=", "output", "help"])
