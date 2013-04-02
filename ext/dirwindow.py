@@ -45,13 +45,13 @@ class DirWindow:
     def _create_panel(self, pos_x, pos_y, pos_width, pos_height, file_data_item):
         """ Create the visual representation of a 'file_data_item'
         """
-        new_panel = DirPanel(pos_x, pos_y, pos_width, pos_height, file_data_item, self.selected_items)
+        new_panel = DirPanel(self.window, pos_x, pos_y, pos_width, pos_height, file_data_item, self.selected_items)
         self.Controls.append(new_panel)
         return new_panel
 
 
     @staticmethod
-    def open_path(self, path):
+    def open_path(path):
         new_window = DirWindow(path)
         new_window.mainloop()
 
@@ -116,12 +116,13 @@ class DirWindow:
 class DirPanel:
     """ Panel with directory information.
     """
-    def __init__(self, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container, selection_callback_func = None):
-        self.frame = Frame(borderwidth=3, bd=1, relief=RIDGE)
+    def __init__(self, root, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container, selection_callback_func = None):
+        self.frame = Frame(root, borderwidth=3, bd=1, relief=RIDGE)
         self.frame.default_color = self.frame["background"]
         self.frame.parent = self
         self.base_form_selected_items = selected_items_container
         self.frame.place(x = pos_x, y = pos_y, width = pos_width, height = pos_height)
+        self.frame.is_main_control = True
         self.frame.bind("<Button-1>", lambda e: self._dir_panel_click(e))
         self.frame.bind("<Double-Button-1>", lambda e: self._dir_panel_dbl_click(e))
         self.frame.default_x = pos_x
@@ -140,8 +141,12 @@ class DirPanel:
             self.frame.file_size = file_data_item["size"]
         self.label = Label(self.frame, text=self.frame.title)
         self.frame.label = self.label
+        self.label.main_control = self.frame
+        self.label.is_main_control = False
         self.label.pack(expand=YES, fill=BOTH)
         self.selection_callback = selection_callback_func
+        self.label.bind("<Button-1>", lambda e: self._dir_panel_click(e))
+        self.label.bind("<Double-Button-1>", lambda e: self._dir_panel_dbl_click(e))
         self.frame.is_selected = False
 
     def add_to_selected_items(self):
@@ -161,20 +166,24 @@ class DirPanel:
         """ One click on a directory panel
         """
         print "one_click"
-        selected_panel = e.widget
-        if selected_panel is not None:
-            selected_panel.is_selected = not selected_panel.is_selected
-            if selected_panel.is_selected:
-                selected_panel.parent.add_to_selected_items()
-                selected_panel["background"] = VIEW_SETTIGNS['selection-color']
+        selected_frame = e.widget
+        if not selected_frame.is_main_control:
+            selected_frame = selected_frame.main_control
+        if selected_frame is not None:
+            selected_frame.is_selected = not selected_frame.is_selected
+            if selected_frame.is_selected:
+                selected_frame.parent.add_to_selected_items()
+                selected_frame["background"] = VIEW_SETTIGNS['selection-color']
             else:
-                selected_panel.parent.remove_from_selected_items()
-                selected_panel["background"] = selected_panel.default_color
+                selected_frame.parent.remove_from_selected_items()
+                selected_frame["background"] = selected_frame.default_color
     def _dir_panel_dbl_click(self, e):
         """ Double click on a directory panel
         """
         print "dbl_click"
         selected_frame = e.widget
+        if not selected_frame.is_main_control:
+            selected_frame = selected_frame.main_control
         if selected_frame is not None and selected_frame.is_directory:
             DirWindow.open_path(selected_frame.full_path)
 
