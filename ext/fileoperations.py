@@ -2,14 +2,15 @@ import os
 
 lambda_sorting_key = lambda file_info: file_info["size"]
 
-def produce_item_info(file_name, full_path, size, is_hidden = False):
+def produce_item_info(file_name, full_path, size, is_directory = False, is_hidden = False):
     """ Create the file info item for current file
     """
     return {
         "file_name" : file_name,
         "full_path" : full_path,
         "size" : size,
-        "is_hidden" : is_hidden
+        "is_hidden" : is_hidden,
+        "is_directory" : is_directory
     }
 def get_items_size(path=".", callback_iteration_func = None):
     """ Get list of all of the files and directories in 'path', with their sizes and additional info.
@@ -31,15 +32,18 @@ def get_items_size(path=".", callback_iteration_func = None):
 
         file_name_full = os.path.join(path, file_name)
         file_size = 0
+        is_directory = False
 
         if os.path.isfile(file_name_full):
             file_size = os.stat(file_name_full).st_size
+            is_directory = False
         elif os.path.isdir(file_name_full):
             file_size = get_dir_size(file_name_full)
+            is_directory = True
 
         result["total_size"] += file_size
 
-        result["items"].append(produce_item_info(file_name, file_name_full, file_size, False))
+        result["items"].append(produce_item_info(file_name, file_name_full, file_size, is_directory))
 
     return result
 
@@ -94,4 +98,3 @@ def get_bytes_size_range(num):
 
 if __name__ == "__main__" :
     print "Helper functions for file operations"
-    print get_bytes_size_range(1024)

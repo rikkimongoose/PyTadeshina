@@ -4,6 +4,8 @@ from fileoperations import *
 PROGRAM_TITLE = "PyTadeshina"
 PROGRAM_VER = "0.1"
 
+VIEW_SETTIGNS = { "selection-color" : "red" }
+
 class DirWindow:
     """ Window with directory info
     """
@@ -17,6 +19,7 @@ class DirWindow:
         self.window = Tk()
         self.window.title(self._gen_title(path))
         self.window.geometry("%sx%s" % (self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"]))
+        self.selected_items = []
 
         items_data = get_items_size(path, None)
         source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
@@ -42,15 +45,12 @@ class DirWindow:
     def _create_panel(self, pos_x, pos_y, pos_width, pos_height, file_data_item):
         """ Create the visual representation of a 'file_data_item'
         """
-        new_panel = Frame(borderwidth=3, bd=1, relief=RIDGE) #Button(MAIN_WINDOW, text=file_data_item["file_name"])
-        new_panel.place(x = pos_x, y = pos_y, width = pos_width, height= pos_height)
+        new_panel = DirPanel(pos_x, pos_y, pos_width, pos_height, file_data_item, self.selected_items)
         self.Controls.append(new_panel)
-        new_buttom_label = Label(new_panel, text=file_data_item["file_name"])
-        new_buttom_label.pack(expand=YES, fill=BOTH)
-        file_data_item["button_item"] = new_panel
-        file_data_item["button_item_label"] = new_buttom_label
         return new_panel
 
+
+    @staticmethod
     def open_path(self, path):
         new_window = DirWindow(path)
         new_window.mainloop()
@@ -112,6 +112,71 @@ class DirWindow:
                 previous_rect["height"] = old_y - prev_y
         rects_list.append({"x" : old_x, "y" : old_y, "width" : first_width - old_x, "height" : first_height - old_y, "item" : source_items[source_items_sorted_last]})
         return rects_list
+
+class DirPanel:
+    """ Panel with directory information.
+    """
+    def __init__(self, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container, selection_callback_func = None):
+        self.frame = Frame(borderwidth=3, bd=1, relief=RIDGE)
+        self.frame.default_color = self.frame["background"]
+        self.frame.parent = self
+        self.base_form_selected_items = selected_items_container
+        self.frame.place(x = pos_x, y = pos_y, width = pos_width, height = pos_height)
+        self.frame.bind("<Button-1>", lambda e: self._dir_panel_click(e))
+        self.frame.bind("<Double-Button-1>", lambda e: self._dir_panel_dbl_click(e))
+        self.frame.default_x = pos_x
+        self.frame.default_y = pos_y
+        self.frame.default_width = pos_width
+        self.frame.default_height = pos_height
+        self.frame.file_data_item = file_data_item
+        self.frame.file_size = 0
+        self.frame.title = ""
+        self.frame.full_path = ""
+        self.frame.is_directory = False
+        if file_data_item is not None:
+            self.frame.title = file_data_item["file_name"]
+            self.frame.full_path = file_data_item["full_path"]
+            self.frame.is_directory = file_data_item["is_directory"]
+            self.frame.file_size = file_data_item["size"]
+        self.label = Label(self.frame, text=self.frame.title)
+        self.frame.label = self.label
+        self.label.pack(expand=YES, fill=BOTH)
+        self.selection_callback = selection_callback_func
+        self.frame.is_selected = False
+
+    def add_to_selected_items(self):
+        if self.base_form_selected_items is None: return
+        self.base_form_selected_items.append(self)
+
+    def remove_from_selected_items(self):
+        if self.base_form_selected_items is None: return
+        self.base_form_selected_items.remove(self)
+
+    def start_selected_items(self):
+        if self.base_form_selected_items is None: return
+        del self.base_form_selected_items [:]
+        self.add_to_selected_items()
+
+    def _dir_panel_click(self, e):
+        """ One click on a directory panel
+        """
+        print "one_click"
+        selected_panel = e.widget
+        if selected_panel is not None:
+            selected_panel.is_selected = not selected_panel.is_selected
+            if selected_panel.is_selected:
+                selected_panel.parent.add_to_selected_items()
+                selected_panel["background"] = VIEW_SETTIGNS['selection-color']
+            else:
+                selected_panel.parent.remove_from_selected_items()
+                selected_panel["background"] = selected_panel.default_color
+    def _dir_panel_dbl_click(self, e):
+        """ Double click on a directory panel
+        """
+        print "dbl_click"
+        selected_frame = e.widget
+        if selected_frame is not None and selected_frame.is_directory:
+            DirWindow.open_path(selected_frame.full_path)
 
 if __name__ == "__main__":
     print "DirWindow class module"
