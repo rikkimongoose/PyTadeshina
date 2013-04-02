@@ -30,6 +30,14 @@ class DirWindow:
         for rect in rects_list:
             self._create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
 
+        # create a menu
+        self.popup = Menu(self.window, tearoff=0)
+        self.popup.add_command(label="Delete") # , command=next) etc...
+        self.popup.add_command(label="Delete to Recycle")
+        self.popup.add_separator()
+        self.popup.add_command(label="About")
+        self.window.bind("<Button-3>", lambda e: self.do_popup(e))
+
     def mainloop(self):
         """ Execute to show the window
         """
@@ -146,6 +154,7 @@ class DirWindow:
                 selected_items_size += selected_item.file_size
             new_title = ("%s in %s files" % (DirOperations.get_bytes_size_units(selected_items_size), selected_items_len))
         self.window.title(self._gen_title(new_title))
+
     def _update_elements_size(self):
         """ Update inner items size according to changed size of the window
         """
@@ -159,21 +168,32 @@ class DirWindow:
             control_y = float(control.frame.default_y) * height_koeff
             control.frame.place(x = control_x, y = control_y, width = control_width, height = control_height)
 
+    def do_popup(self, event):
+        # display the popup menu
+        try:
+            self.popup.tk_popup(event.x_root, event.y_root, 0)
+        finally:
+            # make sure to release the grab (Tk 8.0a1 only)
+            self.popup.grab_release()
+
 class DirPanel:
     """ Panel with directory information.
     """
     def __init__(self, root, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container):
-        lambda_dir_panel_click = lambda e: self._dir_panel_click(e, self.frame, self)
-        lambda_dir_panel_dbl_click = lambda e: self._dir_panel_dbl_click(e, self.frame, self)
-
         self.root = root
         self.frame = Frame(root, borderwidth=3, bd=1, relief=RIDGE)
+
+        lambda_dir_panel_click = lambda e: self._dir_panel_click(e, self.frame, self)
+        lambda_dir_panel_dbl_click = lambda e: self._dir_panel_dbl_click(e, self.frame, self)
+        lambda_window_popup = lambda e: self.add_to_selected_items() and root.app_item.do_popup(e)
+
         self.frame.default_color = self.frame["background"]
         self.frame.app_item = self
         self.base_form_selected_items = selected_items_container
         self.frame.place(x = pos_x, y = pos_y, width = pos_width, height = pos_height)
         self.frame.bind("<Button-1>", lambda_dir_panel_click)
         self.frame.bind("<Double-Button-1>", lambda_dir_panel_dbl_click)
+        self.frame.bind("<Button-3>", lambda_window_popup)
         self.frame.default_x = pos_x
         self.frame.default_y = pos_y
         self.frame.default_width = pos_width
@@ -193,6 +213,7 @@ class DirPanel:
         self.label.pack(expand=YES, fill=BOTH)
         self.label.bind("<Button-1>", lambda_dir_panel_click)
         self.label.bind("<Double-Button-1>", lambda_dir_panel_dbl_click)
+        self.label.bind("<Button-3>", lambda_window_popup)
         self.frame.is_selected = False
 
     def add_to_selected_items(self):
@@ -200,6 +221,7 @@ class DirPanel:
         """
         if self.base_form_selected_items is None: return
         self.root.app_item.add_to_selected_items(self)
+        self.frame.is_selected = True
         self.frame["background"] = VIEW_SETTIGNS['selection-color']
 
     def remove_from_selected_items(self):
@@ -207,6 +229,7 @@ class DirPanel:
         """
         if self.base_form_selected_items is None: return
         self.root.app_item.remove_from_selected_items(self)
+        self.frame.is_selected = False
         self.frame["background"] = self.frame.default_color
 
     def _dir_panel_click(self, e, selected_frame, frame_item):
@@ -214,8 +237,7 @@ class DirPanel:
         """
         if selected_frame is None: return
 
-        selected_frame.is_selected = not selected_frame.is_selected
-        if selected_frame.is_selected:
+        if not selected_frame.is_selected:
             frame_item.add_to_selected_items()
         else:
             frame_item.remove_from_selected_items()
