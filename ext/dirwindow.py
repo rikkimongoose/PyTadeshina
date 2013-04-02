@@ -10,7 +10,7 @@ class DirWindow:
     """ Window with directory info
     """
     DEFAULT_WINDOW_PARAMS = {"width" : 500, "height" : 500}
-    Controls = []
+    controls = []
     _is_shown = False
 
     def __init__(self, path = "."):
@@ -20,7 +20,9 @@ class DirWindow:
 
         self.window = Tk()
         self.window.app_item = self
-        self.window.geometry("%sx%s" % (self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"]))
+        self.default_width = self.DEFAULT_WINDOW_PARAMS["width"]
+        self.default_height = self.DEFAULT_WINDOW_PARAMS["height"]
+        self.window.geometry("%sx%s" % (self.default_width, self.default_height                                                                                  ))
         self.update_window_title()
         items_data = DirOperations.get_items_size(path, None)
         source_items_sorted = sorted(items_data["items"], key = DirOperations.get_lambda_sorting_key(), reverse = True)
@@ -32,6 +34,7 @@ class DirWindow:
         """ Execute to show the window
         """
         if not self._is_shown:
+            self.window.bind("<Configure>", lambda e: self._update_elements_size())
             self.window.mainloop()
             _is_shown = True
 
@@ -47,7 +50,7 @@ class DirWindow:
         """ Create the visual representation of a 'file_data_item'
         """
         new_panel = DirPanel(self.window, pos_x, pos_y, pos_width, pos_height, file_data_item, self.selected_items)
-        self.Controls.append(new_panel)
+        self.controls.append(new_panel)
         return new_panel
 
 
@@ -129,6 +132,8 @@ class DirWindow:
             self.update_window_title()
 
     def update_window_title(self):
+        """ Update window title with data about selected files and their size
+        """
         selected_items_len = len(self.selected_items)
         new_title = ""
         if selected_items_len == 0:
@@ -141,6 +146,18 @@ class DirWindow:
                 selected_items_size += selected_item.file_size
             new_title = ("%s in %s files" % (DirOperations.get_bytes_size_units(selected_items_size), selected_items_len))
         self.window.title(self._gen_title(new_title))
+    def _update_elements_size(self):
+        """ Update inner items size according to changed size of the window
+        """
+        width_koeff = float(self.window.winfo_width()) / float(self.default_width)
+        height_koeff = float(self.window.winfo_height()) / float(self.default_height)
+        if width_koeff == 1.0 and height_koeff == 1.0: return
+        for control in self.controls:
+            control_width = float(control.frame.default_width) * width_koeff
+            control_height = float(control.frame.default_height) * height_koeff
+            control_x = float(control.frame.default_x) * width_koeff
+            control_y = float(control.frame.default_y) * height_koeff
+            control.frame.place(x = control_x, y = control_y, width = control_width, height = control_height)
 
 class DirPanel:
     """ Panel with directory information.
