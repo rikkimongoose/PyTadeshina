@@ -1,5 +1,5 @@
 from Tkinter import *
-from fileoperations import *
+from diroperations import *
 
 PROGRAM_TITLE = "PyTadeshina"
 PROGRAM_VER = "0.1"
@@ -15,15 +15,16 @@ class DirWindow:
 
     def __init__(self, path = "."):
         object.__init__(self)
-        self.path = path
-        self.window = Tk()
-        self.window.title(self._gen_title(path))
-        self.window.geometry("%sx%s" % (self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"]))
         self.selected_items = []
+        self.path = path
 
-        items_data = get_items_size(path, None)
-        source_items_sorted = sorted(items_data["items"], key = lambda_sorting_key, reverse = True)
-        rects_list = self._tile_with_rects(self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"], source_items_sorted, items_data["total_size"], lambda_sorting_key)    
+        self.window = Tk()
+        self.window.app_item = self
+        self.window.geometry("%sx%s" % (self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"]))
+        self.update_window_title()
+        items_data = DirOperations.get_items_size(path, None)
+        source_items_sorted = sorted(items_data["items"], key = DirOperations.get_lambda_sorting_key(), reverse = True)
+        rects_list = self._tile_with_rects(self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"], source_items_sorted, items_data["total_size"], DirOperations.get_lambda_sorting_key())
         for rect in rects_list:
             self._create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
 
@@ -113,16 +114,45 @@ class DirWindow:
         rects_list.append({"x" : old_x, "y" : old_y, "width" : first_width - old_x, "height" : first_height - old_y, "item" : source_items[source_items_sorted_last]})
         return rects_list
 
+    def add_to_selected_items(self, item):
+        """Add item to selected items of current form
+        """
+        if item not in self.selected_items:
+            self.selected_items.append(item)
+            self.update_window_title()
+
+    def remove_from_selected_items(self, item):
+        """ Remove item from selected items of current form
+        """
+        if item in self.selected_items:
+            self.selected_items.remove(item)
+            self.update_window_title()
+
+    def update_window_title(self):
+        selected_items_len = len(self.selected_items)
+        new_title = ""
+        if selected_items_len == 0:
+            new_title = self.path
+        elif selected_items_len == 1:
+            new_title = "%s (%s)" % (self.selected_items[0].title, DirOperations.get_bytes_size_units(self.selected_items[0].file_size))
+        else:
+            selected_items_size = 0
+            for selected_item in self.selected_items:
+                selected_items_size += selected_item.file_size
+            new_title = ("%s in %s files" % (DirOperations.get_bytes_size_units(selected_items_size), selected_items_len))
+        self.window.title(self._gen_title(new_title))
+
 class DirPanel:
     """ Panel with directory information.
     """
-    def __init__(self, root, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container, selection_callback_func = None):
+    def __init__(self, root, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container):
         lambda_dir_panel_click = lambda e: self._dir_panel_click(e, self.frame, self)
         lambda_dir_panel_dbl_click = lambda e: self._dir_panel_dbl_click(e, self.frame, self)
 
+        self.root = root
         self.frame = Frame(root, borderwidth=3, bd=1, relief=RIDGE)
         self.frame.default_color = self.frame["background"]
-        self.frame.parent = self
+        self.frame.app_item = self
         self.base_form_selected_items = selected_items_container
         self.frame.place(x = pos_x, y = pos_y, width = pos_width, height = pos_height)
         self.frame.bind("<Button-1>", lambda_dir_panel_click)
@@ -132,35 +162,34 @@ class DirPanel:
         self.frame.default_width = pos_width
         self.frame.default_height = pos_height
         self.frame.file_data_item = file_data_item
-        self.frame.file_size = 0
-        self.frame.title = ""
-        self.frame.full_path = ""
+        self.file_size = 0
+        self.title = ""
+        self.full_path = ""
         self.frame.is_directory = False
         if file_data_item is not None:
-            self.frame.title = file_data_item["file_name"]
-            self.frame.full_path = file_data_item["full_path"]
+            self.title = file_data_item["file_name"]
+            self.full_path = file_data_item["full_path"]
             self.frame.is_directory = file_data_item["is_directory"]
-            self.frame.file_size = file_data_item["size"]
-        self.label = Label(self.frame, text=self.frame.title)
+            self.file_size = file_data_item["size"]
+        self.label = Label(self.frame, text=self.title)
         self.frame.label = self.label
         self.label.pack(expand=YES, fill=BOTH)
-        self.selection_callback = selection_callback_func
         self.label.bind("<Button-1>", lambda_dir_panel_click)
         self.label.bind("<Double-Button-1>", lambda_dir_panel_dbl_click)
         self.frame.is_selected = False
 
     def add_to_selected_items(self):
-        """ Add current item to selected list for current form
+        """Add current item to selected items of current form
         """
         if self.base_form_selected_items is None: return
-        self.base_form_selected_items.append(self)
+        self.root.app_item.add_to_selected_items(self)
         self.frame["background"] = VIEW_SETTIGNS['selection-color']
 
     def remove_from_selected_items(self):
-        """ Remove current item from selected list for current form
+        """ Remove current item from selected items of current form
         """
         if self.base_form_selected_items is None: return
-        self.base_form_selected_items.remove(self)
+        self.root.app_item.remove_from_selected_items(self)
         self.frame["background"] = self.frame.default_color
 
     def _dir_panel_click(self, e, selected_frame, frame_item):
@@ -179,7 +208,7 @@ class DirPanel:
         if selected_frame is None: return
 
         if selected_frame.is_directory:
-            DirWindow.open_path(selected_frame.full_path)
+            DirWindow.open_path(frame_item.full_path)
 
 if __name__ == "__main__":
     print "DirWindow class module"
