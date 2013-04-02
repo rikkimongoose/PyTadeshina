@@ -1,5 +1,5 @@
 import os
-
+from send2trash import send2trash
 
 class DirOperations:
     """ Helper class for directory operations
@@ -86,7 +86,7 @@ class DirOperations:
                     seen[file_id] = True
                 total_size += file_stat.st_size
         return total_size
-        
+
     def get_items_size_callback(filename='', length=0, current_item=0):
         """ Callback function to bear process of directory change
         """
@@ -110,6 +110,13 @@ class DirOperations:
         i -= 2
         return "%.2f%s" % (float(num) / float(1 << ((i << 1) * 5)), range_titles[i])
 
+    @staticmethod
+    def remove_file(file_name):
+        os.remove(file_name)
+
+    @staticmethod
+    def remove_file_to_trash(file_name):
+        send2trash(file_name)
 
 if __name__ == "__main__" :
     print "Helper functions for file operations"

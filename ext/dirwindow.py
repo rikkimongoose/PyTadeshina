@@ -22,20 +22,15 @@ class DirWindow:
         self.window.app_item = self
         self.default_width = self.DEFAULT_WINDOW_PARAMS["width"]
         self.default_height = self.DEFAULT_WINDOW_PARAMS["height"]
-        self.window.geometry("%sx%s" % (self.default_width, self.default_height                                                                                  ))
-        self.update_window_title()
-        items_data = DirOperations.get_items_size(path, None)
-        source_items_sorted = sorted(items_data["items"], key = DirOperations.get_lambda_sorting_key(), reverse = True)
-        rects_list = self._tile_with_rects(self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"], source_items_sorted, items_data["total_size"], DirOperations.get_lambda_sorting_key())
-        for rect in rects_list:
-            self._create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
+        self.window.geometry("%sx%s" % (self.default_width, self.default_height))
+        self.items_count = self.load_dir(path)
 
         # create a menu
         self.popup = Menu(self.window, tearoff=0)
-        self.popup.add_command(label="Delete") # , command=next) etc...
-        self.popup.add_command(label="Delete to Recycle")
+        self.popup.add_command(label="Delete", command=self.do_delete)
+        self.popup.add_command(label="Delete to Recycle", command=self.do_recycle)
         self.popup.add_separator()
-        self.popup.add_command(label="About")
+        self.popup.add_command(label="About", command=self.show_about)
         self.window.bind("<Button-3>", lambda e: self.do_popup(e))
 
     def mainloop(self):
@@ -45,6 +40,19 @@ class DirWindow:
             self.window.bind("<Configure>", lambda e: self._update_elements_size())
             self.window.mainloop()
             _is_shown = True
+
+    def load_dir(self, path = None):
+        """ Load a directory to the current window
+        """
+        if path is not None:
+            self.path = path
+        self.update_window_title()
+        items_data = DirOperations.get_items_size(self.path, None)
+        source_items_sorted = sorted(items_data["items"], key = DirOperations.get_lambda_sorting_key(), reverse = True)
+        rects_list = self._tile_with_rects(self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"], source_items_sorted, items_data["total_size"], DirOperations.get_lambda_sorting_key())
+        for rect in rects_list:
+            self._create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
+        return len(source_items_sorted)
 
     def _gen_title(self, append_str = None):
         """ Generate the window title according current path
@@ -60,7 +68,6 @@ class DirWindow:
         new_panel = DirPanel(self.window, pos_x, pos_y, pos_width, pos_height, file_data_item, self.selected_items)
         self.controls.append(new_panel)
         return new_panel
-
 
     @staticmethod
     def open_path(path):
@@ -168,8 +175,35 @@ class DirWindow:
             control_y = float(control.frame.default_y) * height_koeff
             control.frame.place(x = control_x, y = control_y, width = control_width, height = control_height)
 
+    def do_recycle(self):
+        """ Remove selected files to system recycle bin
+        """
+        for selected_item in self.selected_items:
+            try:
+                DirOperations.remove_file(selected_item.full_path)
+                selected_item.is_exist = False
+            except Error:
+                sys.stderr.write("%s\n" % str(err))
+
+
+    def do_delete(self):
+        """ Remove selected files
+        """
+        for selected_item in self.selected_items:
+            try:
+                DirOperations.remove_file(selected_item.full_path)
+                selected_item.is_exist = False
+            except Error:
+                sys.stderr.write("%s\n" % str(err))
+
+    def show_about(self):
+        """ Show the about box
+        """
+        pass
+
     def do_popup(self, event):
-        # display the popup menu
+        """ Display the popup menu
+        """
         try:
             self.popup.tk_popup(event.x_root, event.y_root, 0)
         finally:
@@ -182,6 +216,8 @@ class DirPanel:
     def __init__(self, root, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container):
         self.root = root
         self.frame = Frame(root, borderwidth=3, bd=1, relief=RIDGE)
+
+        self.is_exist = True
 
         lambda_dir_panel_click = lambda e: self._dir_panel_click(e, self.frame, self)
         lambda_dir_panel_dbl_click = lambda e: self._dir_panel_dbl_click(e, self.frame, self)
