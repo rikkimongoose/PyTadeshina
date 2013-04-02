@@ -117,14 +117,16 @@ class DirPanel:
     """ Panel with directory information.
     """
     def __init__(self, root, pos_x, pos_y, pos_width, pos_height, file_data_item, selected_items_container, selection_callback_func = None):
+        lambda_dir_panel_click = lambda e: self._dir_panel_click(e, self.frame, self)
+        lambda_dir_panel_dbl_click = lambda e: self._dir_panel_dbl_click(e, self.frame, self)
+
         self.frame = Frame(root, borderwidth=3, bd=1, relief=RIDGE)
         self.frame.default_color = self.frame["background"]
         self.frame.parent = self
         self.base_form_selected_items = selected_items_container
         self.frame.place(x = pos_x, y = pos_y, width = pos_width, height = pos_height)
-        self.frame.is_main_control = True
-        self.frame.bind("<Button-1>", lambda e: self._dir_panel_click(e))
-        self.frame.bind("<Double-Button-1>", lambda e: self._dir_panel_dbl_click(e))
+        self.frame.bind("<Button-1>", lambda_dir_panel_click)
+        self.frame.bind("<Double-Button-1>", lambda_dir_panel_dbl_click)
         self.frame.default_x = pos_x
         self.frame.default_y = pos_y
         self.frame.default_width = pos_width
@@ -141,50 +143,42 @@ class DirPanel:
             self.frame.file_size = file_data_item["size"]
         self.label = Label(self.frame, text=self.frame.title)
         self.frame.label = self.label
-        self.label.main_control = self.frame
-        self.label.is_main_control = False
         self.label.pack(expand=YES, fill=BOTH)
         self.selection_callback = selection_callback_func
-        self.label.bind("<Button-1>", lambda e: self._dir_panel_click(e))
-        self.label.bind("<Double-Button-1>", lambda e: self._dir_panel_dbl_click(e))
+        self.label.bind("<Button-1>", lambda_dir_panel_click)
+        self.label.bind("<Double-Button-1>", lambda_dir_panel_dbl_click)
         self.frame.is_selected = False
 
     def add_to_selected_items(self):
+        """ Add current item to selected list for current form
+        """
         if self.base_form_selected_items is None: return
         self.base_form_selected_items.append(self)
+        self.frame["background"] = VIEW_SETTIGNS['selection-color']
 
     def remove_from_selected_items(self):
+        """ Remove current item from selected list for current form
+        """
         if self.base_form_selected_items is None: return
         self.base_form_selected_items.remove(self)
+        self.frame["background"] = self.frame.default_color
 
-    def start_selected_items(self):
-        if self.base_form_selected_items is None: return
-        del self.base_form_selected_items [:]
-        self.add_to_selected_items()
-
-    def _dir_panel_click(self, e):
+    def _dir_panel_click(self, e, selected_frame, frame_item):
         """ One click on a directory panel
         """
-        print "one_click"
-        selected_frame = e.widget
-        if not selected_frame.is_main_control:
-            selected_frame = selected_frame.main_control
-        if selected_frame is not None:
-            selected_frame.is_selected = not selected_frame.is_selected
-            if selected_frame.is_selected:
-                selected_frame.parent.add_to_selected_items()
-                selected_frame["background"] = VIEW_SETTIGNS['selection-color']
-            else:
-                selected_frame.parent.remove_from_selected_items()
-                selected_frame["background"] = selected_frame.default_color
-    def _dir_panel_dbl_click(self, e):
+        if selected_frame is None: return
+
+        selected_frame.is_selected = not selected_frame.is_selected
+        if selected_frame.is_selected:
+            frame_item.add_to_selected_items()
+        else:
+            frame_item.remove_from_selected_items()
+    def _dir_panel_dbl_click(self, e, selected_frame, frame_item):
         """ Double click on a directory panel
         """
-        print "dbl_click"
-        selected_frame = e.widget
-        if not selected_frame.is_main_control:
-            selected_frame = selected_frame.main_control
-        if selected_frame is not None and selected_frame.is_directory:
+        if selected_frame is None: return
+
+        if selected_frame.is_directory:
             DirWindow.open_path(selected_frame.full_path)
 
 if __name__ == "__main__":
