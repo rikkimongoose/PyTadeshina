@@ -85,12 +85,13 @@ def get_bytes_size_range(num):
     is_iteration = True
     while is_iteration:
         prev_value = new_value
-        new_value = num >> (i * 10)
-        i = i + 1
+        new_value = num >> ((i << 1) * 5)
+        i +=  1
         is_iteration = new_value > 0 and i < range_titles_len
-    i = i - 2
-    return "%.2f%s" % (float(num) / float(1 << (10 * i)), range_titles[i])
+    i -= 2
+    return "%.2f%s" % (float(num) / float(1 << ((i << 1) * 5)), range_titles[i])
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" :
     print "Helper functions for file operations"
+    print get_bytes_size_range(1024)
