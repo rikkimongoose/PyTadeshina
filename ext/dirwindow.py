@@ -1,6 +1,7 @@
 from Tkinter import *
 from diroperations import *
 from tkMessageBox import *
+from math import fabs
 
 PROGRAM_TITLE = "PyTadeshina"
 PROGRAM_VER = "0.1"
@@ -171,7 +172,7 @@ class DirWindow:
         """
         width_koeff = float(self.window.winfo_width()) / float(self.default_width)
         height_koeff = float(self.window.winfo_height()) / float(self.default_height)
-        if width_koeff == 1.0 and height_koeff == 1.0: return
+        if fabs(width_koeff) - 1.0 <= 0.1 and fabs(height_koeff - 1.0) <= 0.1: return
         for control in self.controls:
             control_width = float(control.frame.default_width) * width_koeff
             control_height = float(control.frame.default_height) * height_koeff
