@@ -1,8 +1,11 @@
 from Tkinter import *
 from diroperations import *
+from tkMessageBox import *
 
 PROGRAM_TITLE = "PyTadeshina"
 PROGRAM_VER = "0.1"
+
+SETTINGS = {}
 
 VIEW_SETTIGNS = { "selection-color" : "red" }
 
@@ -15,6 +18,7 @@ class DirWindow:
 
     def __init__(self, path = "."):
         object.__init__(self)
+
         self.selected_items = []
         self.path = path
 
@@ -177,24 +181,28 @@ class DirWindow:
 
     def do_recycle(self):
         """ Remove selected files to system recycle bin
-        """
+        """ 
+        if not SETTINGS["silent"] and not self.ask_delete("this files"):
+            return
         for selected_item in self.selected_items:
             try:
                 DirOperations.remove_file(selected_item.full_path)
                 selected_item.is_exist = False
-            except Error:
-                sys.stderr.write("%s\n" % str(err))
+            except OSError, e:
+                sys.stderr.write("%s\n" % str(e))
 
 
     def do_delete(self):
         """ Remove selected files
         """
+        if not SETTINGS["silent"] and not self.ask_delete("this files"):
+            return
         for selected_item in self.selected_items:
             try:
                 DirOperations.remove_file(selected_item.full_path)
                 selected_item.is_exist = False
-            except Error:
-                sys.stderr.write("%s\n" % str(err))
+            except OSError, e:
+                sys.stderr.write("%s\n" % str(e))
 
     def show_about(self):
         """ Show the about box
@@ -209,6 +217,11 @@ class DirWindow:
         finally:
             # make sure to release the grab (Tk 8.0a1 only)
             self.popup.grab_release()
+
+    def ask_delete(self, file_name):
+        """ Ask before deletion
+        """
+        return askyesno("Deletion", "Are you sure want to delete %s?" % file_name)
 
 class DirPanel:
     """ Panel with directory information.

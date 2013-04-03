@@ -3,14 +3,12 @@ import os
 import sys
 import getopt
 import ctypes
-from ext.dirwindow import DirWindow
-
-SETTINGS = {}
+from ext.dirwindow import DirWindow, SETTINGS
 
 # Main code
 def main():
     try:
-        OPTS, ARGS = getopt.getopt(sys.argv[1:], "doh", ["directory=", "output", "help"])
+        OPTS, ARGS = getopt.getopt(sys.argv[1:], "dsh", ["directory=", "silent", "help"])
     except getopt.GetoptError as err:
         sys.stderr.write("%s\n" % str(err))
         sys.exit(2)
@@ -31,7 +29,8 @@ def main():
         sys.stderr.write('Directory "%s" is not existing.' % SETTINGS["path_to_load"])
         sys.exit(2)
 
-    SETTINGS["debug_output"] = "--output" in OPTS
+    SETTINGS["debug_output"] = False
+    SETTINGS["silent"] = "--silent" in OPTS
 
     mainWindow = DirWindow(SETTINGS["path_to_load"])
     mainWindow.mainloop()
@@ -47,7 +46,7 @@ def show_help():
 
     -h, --help - show help
 
-    --o, --output - show output
+    -s, --silent - delete files without prompt
 
     [%directory_name%] - show sizes in a directory
     """
