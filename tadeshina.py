@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+
+# PyTadeshina 0.1
+# Copyright 2013 Rikki Mongoose (http://rikkimongoose.ru)
+
+# This software is licensed under the "GNU GPL" License. The terms are also available at 
+# http://www.gnu.org/licenses/gpl.html
+
+
 import os
 import sys
 import getopt
@@ -48,7 +56,7 @@ def show_help():
 
     -s, --silent - delete files without prompt
 
-    [%directory_name%] - show sizes in a directory
+    [%directory_name%] - start from this directory
     """
 
 if __name__ == "__main__":

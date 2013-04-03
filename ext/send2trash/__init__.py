@@ -5,7 +5,6 @@
 # http://www.hardcoded.net/licenses/bsd_license
 
 import sys
-
 if sys.platform == u'darwin':
     from .plat_osx import send2trash
 elif sys.platform == u'win32':

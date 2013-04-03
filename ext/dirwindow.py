@@ -187,10 +187,11 @@ class DirWindow:
             return
         for selected_item in self.selected_items:
             try:
-                DirOperations.remove_file(selected_item.full_path)
+                DirOperations.remove_file_to_trash(selected_item.full_path)
                 selected_item.is_exist = False
             except OSError, e:
                 sys.stderr.write("%s\n" % str(e))
+        self.do_update()
 
 
     def do_delete(self):
@@ -214,7 +215,7 @@ class DirWindow:
     def show_about(self):
         """ Show the about box
         """
-        pass
+        showinfo("About %s %s." % (PROGRAM_TITLE, PROGRAM_VER), "%s %s\n\nA cross-platform util for estimating the file size and delete the useless ones.\n\nhttp://github.com/rikkimongoose/PyTadeshina\n\nDeveloped by RikkiMongoose under GNU GPL License." % (PROGRAM_TITLE, PROGRAM_VER))
 
     def do_popup(self, event):
         """ Display the popup menu
