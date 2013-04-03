@@ -172,7 +172,7 @@ class DirWindow:
         """
         width_koeff = float(self.window.winfo_width()) / float(self.default_width)
         height_koeff = float(self.window.winfo_height()) / float(self.default_height)
-        if fabs(width_koeff) - 1.0 <= 0.1 and fabs(height_koeff - 1.0) <= 0.1: return
+        if fabs(width_koeff) - 1.0 <= 0.01 and fabs(height_koeff - 1.0) <= 0.01: return
         for control in self.controls:
             control_width = float(control.frame.default_width) * width_koeff
             control_height = float(control.frame.default_height) * height_koeff
@@ -204,6 +204,12 @@ class DirWindow:
                 selected_item.is_exist = False
             except OSError, e:
                 sys.stderr.write("%s\n" % str(e))
+        self.do_update()
+
+    def do_update(self):
+        """ Update data on the form
+        """
+        self.load_dir()
 
     def show_about(self):
         """ Show the about box
@@ -218,6 +224,7 @@ class DirWindow:
         finally:
             # make sure to release the grab (Tk 8.0a1 only)
             self.popup.grab_release()
+        self.do_update()
 
     def ask_delete(self, file_name):
         """ Ask before deletion
