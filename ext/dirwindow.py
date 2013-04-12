@@ -4,7 +4,7 @@ from tkMessageBox import *
 from math import fabs
 
 PROGRAM_TITLE = "PyTadeshina"
-PROGRAM_VER = "0.1"
+PROGRAM_VER = "0.2"
 
 SETTINGS = {}
 
@@ -49,15 +49,27 @@ class DirWindow:
     def load_dir(self, path = None):
         """ Load a directory to the current window
         """
+        import thread
+
         if path is not None:
             self.path = path
-        self.update_window_title()
-        items_data = DirOperations.get_items_size(self.path, None)
-        source_items_sorted = sorted(items_data["items"], key = DirOperations.get_lambda_sorting_key(), reverse = True)
-        rects_list = self._tile_with_rects(self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"], source_items_sorted, items_data["total_size"], DirOperations.get_lambda_sorting_key())
-        for rect in rects_list:
-            self._create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
-        return len(source_items_sorted)
+
+        def iteration_callback(file_name, dir_list_length, i):
+            """ Callback function used to update the window title during the enumeration of directories.
+            """
+            info_title = "Processing %s" % file_name
+            self.window.title(self._gen_title(info_title))
+
+        def result_callback(items_data):
+            self.update_window_title()
+            source_items_sorted = sorted(items_data["items"], key = DirOperations.get_lambda_sorting_key(), reverse = True)
+            rects_list = self._tile_with_rects(self.DEFAULT_WINDOW_PARAMS["width"], self.DEFAULT_WINDOW_PARAMS["height"], source_items_sorted, items_data["total_size"], DirOperations.get_lambda_sorting_key())
+            for rect in rects_list:
+                self._create_panel(rect["x"], rect["y"], rect["width"], rect["height"], rect["item"])
+            return len(source_items_sorted)
+
+        thread.start_new_thread(DirOperations.get_items_size, (self.path, iteration_callback, result_callback))
+
 
     def _gen_title(self, append_str = None):
         """ Generate the window title according current path

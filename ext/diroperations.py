@@ -23,7 +23,7 @@ class DirOperations:
         return lambda file_info: file_info["size"]
 
     @staticmethod
-    def get_items_size(path=".", callback_iteration_func = None):
+    def get_items_size(path=".", callback_iteration_func = None, callback_result_func = None):
         """ Get list of all of the files and directories in 'path', with their sizes and additional info.
 
             'callback_iteration_func' is executed every new item checking.
@@ -55,6 +55,9 @@ class DirOperations:
             result["total_size"] += file_size
 
             result["items"].append(DirOperations._produce_item_info(file_name, file_name_full, file_size, is_directory))
+        # do callback
+        if callback_result_func is not None:
+            callback_result_func(result)
 
         return result
 
